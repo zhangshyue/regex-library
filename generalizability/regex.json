@@ -1,0 +1,5 @@
+{
+  "name": "generalizability",
+  "command": "cargo run",
+  "show_unified_output": "cargo run unified_output"
+}

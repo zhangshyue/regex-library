@@ -1,0 +1,164 @@
+syntax="proto3";
+
+enum FlagType {
+    Ignore = 0;
+    Global = 1;
+    Multiline = 2;
+    Unicode = 3;
+    Sticky = 4;
+    Dotall = 5;
+}
+
+enum SubstitutionType {
+    Match = 0;
+    Capture = 1;
+    BeforeMatch = 2;
+    AfterMatch = 3;
+    EscapedDollar = 4;
+}
+
+enum AnchorType {
+    Beginning = 0;
+    End = 1;
+    WordBoundary = 2;
+    NotWordBoundary = 3;
+    ForwardSlash = 4; // /.../ means the string in between is regex (js specific)
+}
+
+enum QuantifierModifierType {
+    Plus = 0;
+    Star = 1;
+    SpecifiedQuantifier = 2; // Something like {1,3}
+    Optional = 3; 
+    Lazy = 4;
+    AlternationPipe = 5; // the usage of | as an alternator
+}
+
+enum LookaroundType {
+    PositiveLookahead = 0; // ?=
+    NegativeLookahead = 1; // ?!
+    PositiveLookbehind = 2; // ?<=
+    NegativeLookbehind = 3; // ?<!
+}
+
+enum EscapeType {
+    // UnicodeEscape instead of Unicode because Unicode is also a Flag type
+    UnicodeEscape = 0; // \uFFF, \uF0FF, \u{FFFF}, etc.
+    Octal = 1; // \000
+    Hexadecimal = 2; // \xFF, \xF0, etc.
+    Reserved = 3; // \+, \\, etc.
+    Control = 4; // \cI
+    Tab = 5; // \t
+    Newline = 6; // \n
+    VerticalTab = 7; // \v
+    FormFeed = 8; // \f
+    CarriageReturn = 9; // \r
+    Null = 10; // \0
+}
+
+enum GroupReferenceType {
+    OpenCapture = 0; // (
+    CloseCapture = 1; // )
+    GroupName = 2; // in the expression (?<name>ABC), this is <name>
+    NumericReference = 3; // \1, \2, etc.
+    NonCapturing = 4; // In the expression (?:ABC), this is ?:
+}
+
+enum CharacterClassType {
+    OpenSet = 0; // [ in [ABC]
+    CloseSet = 1; // ] in [ABC]
+    SetNegation = 2; // ^ in [^ABC]
+    InclusiveSet = 3; // ABC in [ABC]
+    RangeSet = 4; // A-Z in [A-Z]
+    Dot = 5; // .
+    Word = 6; // \w
+    NotWord = 7; // \W
+    Digit = 8; // \d
+    NotDigit = 9; // \D
+    Whitespace = 10; // \s
+    NotWhitespace = 11; // \S
+    UnicodePropertyEscape = 12; // \p{...} include unicode category and script
+    NotUnicodePropertyEscape = 13; // \P{...}
+    AtomicGroup = 14; // (?>...)
+}
+
+enum TokenType {
+    Flag = 0;
+    Substitution = 1;
+    QuantifierModifier = 2;
+    Anchor = 3;    
+    GroupReference = 4;
+    Character = 5;
+    Lookaround = 6;
+    Escape = 7;
+    CharacterClass = 8;
+}
+
+message Token {
+    string token = 8;
+    TokenType type = 9;
+    
+    oneof sub_type {
+        FlagType flag = 10;
+        SubstitutionType substitution = 11;
+        QuantifierModifierType quantifiermodifier = 12;
+        AnchorType anchor = 13;
+        string character = 14;
+        LookaroundType lookaround = 15;
+        EscapeType escape = 16;
+        GroupReferenceType groupref = 17;
+        CharacterClassType characterclass = 18;
+    }
+}
+
+enum SupportedLanguage {
+    Python = 0;
+    JavaScript = 1;
+    Java = 2;
+    Rust = 3;
+    Golang = 4;
+    PHP = 5;
+    Ruby = 6;
+}
+
+message Expression {
+    string raw = 5;
+    repeated Token tokens=6;
+    repeated Expression expressions=7;
+}
+
+message Root {
+    string file = 1;
+    SupportedLanguage language = 2;
+    int32 line_number = 3;
+    Expression expression = 4;
+}
+
+message Annotation {
+    string note = 1;
+    // A relevant entity for an annotation can be either a token or an expression, or alternatively, 
+    // a module can choose just to attach a string
+    oneof relevant_entity {
+        string entity = 2;
+        Token token = 3;
+        Expression expression = 4;
+    }
+}
+
+message Output {
+    string status = 1;
+    repeated Annotation annotations = 2;
+    int32 score = 3;
+}
+
+message FileOutput {
+    Root root = 1;
+    repeated Output outputs = 2;
+}
+
+message FoundExpresssion {
+    string expression = 1;
+    string file = 2;
+    int32 line_number = 3;
+    SupportedLanguage language = 4;
+}

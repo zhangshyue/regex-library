@@ -1,0 +1,5 @@
+{
+  "name": "understandability",
+  "command": "python3 understandability.py expression",
+  "show_unified_output": "python3 understandability.py file"
+}
