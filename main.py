@@ -9,14 +9,16 @@ import base64
 
 # Internal imports
 from protobuf.python_out.root_pb2 import *
-from output.main import format as output_formatter
+# from output.main import format as output_formatter
+
+PATH = "/usr/local/Cellar/regexAnalyzer/1.0.0/bin"
 
 def run_rust_module(module: str, args: str):
     # Sanity check - make sure the module exists, it's a rust project, and it's been built for release
-    assert os.path.isdir(os.path.dirname(__file__) + "/" + module) and \
-            os.path.isfile(os.path.dirname(__file__) + f"/{module}/Cargo.toml") and \
-           os.path.isdir(os.path.dirname(__file__) + f"/{module}/target/release")
-    output = subprocess.check_output([os.path.dirname(__file__) + f"/{module}/target/release/runner", args])
+    assert os.path.isdir(PATH + "/" + module) and \
+            os.path.isfile(PATH + f"/{module}/Cargo.toml") and \
+           os.path.isdir(PATH + f"/{module}/target/release")
+    output = subprocess.check_output([PATH + f"/{module}/target/release/runner", args])
     return output.decode()
 
 
@@ -29,12 +31,12 @@ _PYTHON_ENTRYPOINTS = {
 
 
 def run_python_module(module: str, args: str):
-    assert os.path.isdir(os.path.dirname(__file__) + "/" + module) and module in _PYTHON_ENTRYPOINTS
+    assert os.path.isdir(PATH + "/" + module) and module in _PYTHON_ENTRYPOINTS
     module_entrypoint = _PYTHON_ENTRYPOINTS[module]
-    assert os.path.isfile(os.path.dirname(__file__) + f"/{module}/{module_entrypoint}")
+    assert os.path.isfile(PATH + f"/{module}/{module_entrypoint}")
     curr_dir = os.getcwd()
     # Run the process
-    output = subprocess.check_output(["python3", os.path.dirname(__file__) + f"/{module}/{module_entrypoint}", args])
+    output = subprocess.check_output(["python3", PATH + f"/{module}/{module_entrypoint}", args])
     return output.decode()
 
 
