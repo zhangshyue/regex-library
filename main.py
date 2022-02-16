@@ -9,16 +9,13 @@ import base64
 
 # Internal imports
 from protobuf.python_out.root_pb2 import *
-# from output.main import format as output_formatter
+from output.main import format as output_formatter
 
-PATH = "/usr/local/Cellar/regexAnalyzer/1.0.6/bin"
+PATH = os.path.dirname(__file__)
 
 def run_rust_module(module: str, args: str):
     # Sanity check - make sure the module exists, it's a rust project, and it's been built for release
-    assert os.path.isdir(PATH + "/" + module) and \
-            os.path.isfile(PATH + f"/{module}/Cargo.toml") and \
-           os.path.isdir(PATH + f"/{module}/target/release")
-    output = subprocess.check_output([PATH + f"/{module}/target/release/runner", args])
+    output = subprocess.check_output([os.path.dirname(__file__) + f"/{module}/target/release/runner", args])
     return output.decode()
 
 
@@ -34,7 +31,7 @@ def run_python_module(module: str, args: str):
     curr_dir = os.getcwd()
     # Run the process
     module_entrypoint = _PYTHON_ENTRYPOINTS[module]
-    output = subprocess.check_output(["python3", PATH + f"/{module}/{module_entrypoint}", args])
+    output = subprocess.check_output(["python3", os.path.dirname(__file__) + f"/{module}/{module_entrypoint}", args])
     return output.decode()
 
 
@@ -91,12 +88,7 @@ def run_library(entrypoint: str, run_security: bool):
             module_output.ParseFromString(base64.b64decode(encoded_output))
             new_output = file_output.outputs.add()
             new_output.CopyFrom(module_output)
-        # output_formatter(file_output)
-        expr_raw = base64.b64encode(file_output.SerializeToString()).decode('utf-8')
-        output = FileOutput()
-        output.ParseFromString(base64.b64decode(expr_raw))
-        print(output)
-
+        output_formatter(file_output)
 
 
 def main():
