@@ -11,7 +11,7 @@ import base64
 from protobuf.python_out.root_pb2 import *
 # from output.main import format as output_formatter
 
-PATH = "/usr/local/Cellar/regexAnalyzer/1.0.2/bin"
+PATH = "/usr/local/Cellar/regexAnalyzer/1.0.3/bin"
 
 def run_rust_module(module: str, args: str):
     # Sanity check - make sure the module exists, it's a rust project, and it's been built for release
