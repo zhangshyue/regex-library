@@ -17,5 +17,4 @@ install-extraction:
 
 install-output:
 	cd output && pip3 install -r requirements.txt
-	cp output/root_pb2
 	cd ..

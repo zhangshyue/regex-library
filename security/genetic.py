@@ -183,15 +183,15 @@ regex_samples = ['h.*?.*?j', '^(?=hello)[a-z]{5}', '^<\!\-\-(.*)+(\/){0,1}\-\->$
 
 def main():
     expr_raw = base64.b64decode(sys.argv[1])
-    e = root_pb2.Expression()
-    e.ParseFromString(expr_raw)
+    r = root_pb2.Root()
+    r.ParseFromString(expr_raw)
     iterations = 1000
-    tokens = get_tokens(e)
+    tokens = get_tokens(r.expression)
     # print(tokens)
     # print(generate_seeds(tokens))
-    output, evolution = evaluate_regex(e, iterations)
-    print(output)
-    # print(base64.b64encode(output.SerializeToString()).decode('utf-8'))
+    output, evolution = evaluate_regex(r.expression, iterations)
+    #print(output)
+    print(base64.b64encode(output.SerializeToString()).decode('utf-8'))
 
     # if len(evolution) > 2:
     #     plt.plot(evolution)

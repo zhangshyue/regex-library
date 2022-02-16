@@ -31,11 +31,9 @@ _PYTHON_ENTRYPOINTS = {
 
 
 def run_python_module(module: str, args: str):
-    assert os.path.isdir(PATH + "/" + module) and module in _PYTHON_ENTRYPOINTS
-    module_entrypoint = _PYTHON_ENTRYPOINTS[module]
-    assert os.path.isfile(PATH + f"/{module}/{module_entrypoint}")
     curr_dir = os.getcwd()
     # Run the process
+    module_entrypoint = _PYTHON_ENTRYPOINTS[module]
     output = subprocess.check_output(["python3", PATH + f"/{module}/{module_entrypoint}", args])
     return output.decode()
 
@@ -93,7 +91,12 @@ def run_library(entrypoint: str, run_security: bool):
             module_output.ParseFromString(base64.b64decode(encoded_output))
             new_output = file_output.outputs.add()
             new_output.CopyFrom(module_output)
-        output_formatter(file_output)
+        # output_formatter(file_output)
+        expr_raw = base64.b64encode(file_output.SerializeToString()).decode('utf-8')
+        output = FileOutput()
+        output.ParseFromString(base64.b64decode(expr_raw))
+        print(output)
+
 
 
 def main():
@@ -102,7 +105,7 @@ def main():
     """
     arg_parser = argparse.ArgumentParser(description="Run the regex library on a directory or file")
     arg_parser.add_argument("entrypoint", type=str, help="The file or directory to run the library on")
-    arg_parser.add_argument("--security", type=str, help="Run the security component as well")
+    arg_parser.add_argument("--security", action="store_true", help="Run the security component as well")
     args = arg_parser.parse_args()
     entrypoint = args.entrypoint
     run_library(entrypoint, bool(args.security))

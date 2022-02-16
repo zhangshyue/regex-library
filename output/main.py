@@ -33,47 +33,38 @@ def retrieve_program_context(root: Root) -> list:
 
     return context
 
-def format_token_annotation(root: Root, annotation: Annotation):
-    """
-    Token annotation will find the specific token in the output that the annotation is referring to,
-    and highlight it in the following format
+def format_annotation(annotation: Annotation):
+    if annotation.entity and annotation.entity != '':
+        rel_entity = annotation.entity.replace('[', '\\[')
+    elif annotation.token.token and annotation.token.token != '':
+        rel_entity = annotation.token.token
+    elif annotation.expression:
+        rel_entity = annotation.expression.raw
+    else:
+        raise ValueError("Empty annotation")
+    rich.print(f"[bold]{rel_entity}[/bold]\n^[green][italic]{annotation.note}[/italic][/green]")
 
-    Ex. expr = (.*) token = * note = "this token"
-    output =
-
-    "(.*)"
-       ^ "this token"
-
-    :param annotation:
-    :return:
-    """
-    pass
-
-def format_expression_annotation(root: Root, annotation: Annotation):
-    pass
-
-def format_entity_annotation(root: Root, annotation: Annotation):
-    pass
-
-def format_annotation(root: Root, annotation: Annotation):
-    pass
 
 def format(output: FileOutput):
     rich.print(f"Expression [bold magenta]{output.root.expression.raw}[/bold magenta] from [blue]{output.root.file}[/blue] line [yellow]{output.root.line_number}[/yellow]")
     relevant_lines = retrieve_program_context(output.root)
+    rich_output = ""
     for line_idx, line in relevant_lines:
         if line_idx == output.root.line_number-1:
-            rich.print(f"[bold][red]>[/red][gray]{line_idx}[/gray]{line}[/bold]")
+            rich_output += f"[bold][red]>[/red][gray]{line_idx}[/gray]{line}[/bold]"
         else:
-            rich.print(f"|[gray]{line_idx}[/gray]{line}")
+            rich_output += f"|[gray]{line_idx}[/gray]{line}"
+    rich.print(rich_output)
 
+    for module_output in output.outputs:
+        for annotation in module_output.annotations:
+            format_annotation(annotation)
 
 def main():
     expr_raw = sys.argv[1]
     output = FileOutput()
     output.ParseFromString(base64.b64decode(expr_raw))
-    print(output)
-    #format(output)
+    format(output)
 
 
 

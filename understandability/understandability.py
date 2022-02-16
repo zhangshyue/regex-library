@@ -11,7 +11,7 @@ messages = []
 
 def add_annotation(entity, note, output):
     annotation = output.annotations.add()
-    annotation.note = note
+    annotation.note = "Understandability suggestion: " + note
     annotation.entity = entity
 
 
