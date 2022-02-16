@@ -1,4 +1,5 @@
 install:
+  pip3 install tqdm
 	pip3 install -r requirements.txt
 	make install-generalizability
 	make install-extraction
