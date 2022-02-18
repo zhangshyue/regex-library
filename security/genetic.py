@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 import config
 import root_pb2
 from mutations import single_char_mutate, mult_mutate, crossover_mutate, trim_mutate
-from timing import match_time, match_time, slowest_average_match_time, slowest_total_match_time
+from timing import match_time, match_time, slowest_total_match_time
 from seeding import generate_seeds, get_tokens
+
+testing = False    
 
 
 def cull(regex, generation, number_of_survivors):
@@ -33,7 +35,10 @@ def cull(regex, generation, number_of_survivors):
 
 
 def pump(regex, input):
-    # print("PUMP:", input)
+    """
+    Finds the slowest section of the input and "pumps" it be repeating it in place as many times as possible 
+    "xxbadxx" -> "xxbadbadbadbadxx"
+    """
     trim = list(input)
     slowest_string = input
     slowest_so_far = 0
@@ -59,29 +64,35 @@ def pump(regex, input):
                 j_star = j
     k = (config.max_len - len(string)) // (j_star - i_star + 1)
     # creating pump section of final_string
-    # print("K", k)
     pumped_string = ""
     if k > 1:
         pumped_string = "".join(string[i_star:j_star])
     final_string = "".join(string[0:i_star - 1] + pumped_string * k + string[j_star + 1:])
-    # print("PUMP OUT:", final_string)
     return final_string
 
 
 def vulnerable_tokens_present(regex):
+    """
+    Return true if regex has tokens with potential for exponential behavior 
+    """
     for t in regex.tokens:
         if t.type == root_pb2.TokenType.QuantifierModifier or t.type == root_pb2.TokenType.GroupReference or t.type == root_pb2.TokenType.Lookaround:
             return True
     return False
 
 
-def evaluate_regex(regex_protobuf: root_pb2.Expression, iterations) -> root_pb2.Output:
+def evaluate_regex(regex_protobuf: root_pb2.Expression) -> root_pb2.Output:
+    """
+    Run the genetic algorithm 
+    """
 
     output = root_pb2.Output()
     evolutionary_track = []
     potential_generation = []
     regex = regex_protobuf.raw
     tokens = get_tokens(regex_protobuf)
+    if testing:
+        print("Tokens =", tokens)
     
     if vulnerable_tokens_present(regex_protobuf) == False:
         # skip everything 
@@ -94,9 +105,6 @@ def evaluate_regex(regex_protobuf: root_pb2.Expression, iterations) -> root_pb2.
 
     i = 0
     timed_out = False 
-    # for _ in tqdm(generator(i, iterations, timed_out)):
-    # for i in tqdm(range(iterations)):
-    # while i<iterations and timed_out == False:
     start = time.time() 
     now = start 
     while (now-start) < (config.max_time*60) and timed_out == False:
@@ -120,15 +128,16 @@ def evaluate_regex(regex_protobuf: root_pb2.Expression, iterations) -> root_pb2.
         evolutionary_track.append(current_worst_time)
         if current_worst_time == config.timeout:
             timed_out = True 
-            # print("Your regex took longer than", config.timeout, "seconds to match", current_worst_string)
 
         # print results for testing 
-        # if (i % 100 == 0):
-        #     print("----- Generation", str(i), "-----")
-        #     print("  ", current_worst_string)
-        #     print("  ", current_worst_time)
+        if (testing and i % config.print_iter == 0):
+            print("----- Generation", str(i), "-----")
+            print("  ", current_worst_string)
+            print("  ", current_worst_time)
 
-        # --- PUMP ---
+        # --- PUMP --- 
+        # Add this in to pump every 1000 generations 
+        # Currently out because pumping takes a really long time 
         # if i % 1000 == 0 and i != 0:
         #     for input in generation:
         #         if input != '':
@@ -143,10 +152,8 @@ def evaluate_regex(regex_protobuf: root_pb2.Expression, iterations) -> root_pb2.
         i += 1 
 
     # --- FINAL PUMP --- 
-    # print("----- Pumping -----")
     worst_strings_list = []
     worst_times_list = []
-    # for string in tqdm(generation):
     for string in generation:
         # only pump if you haven't timed out 
         if timed_out == False and len(string) < config.max_len:
@@ -155,19 +162,14 @@ def evaluate_regex(regex_protobuf: root_pb2.Expression, iterations) -> root_pb2.
         worst_times_list.append(match_time(regex, string))
 
 
-    # TODO 
-    # These are just example outputs, showing how you guys can use the Output functionality
-
     for i in range(len(worst_strings_list)):
         if worst_times_list[i] >= config.timeout:
             a = output.annotations.add()
             a.entity = worst_strings_list[i]
-            # a.note = f"This string gave the expression a run time of {worst_times_list[i]} seconds"
-            a.note = f"This string gave the expression a run time longer than {config.timeout} seconds"
+            a.note = f"This string gave the expression a run time longer than {config.timeout} second"
 
     if timed_out==True:
         output.status = "Vulnerability found"
-        # Also optional
         output.score = 1
     else: 
         output.status = "No vulnerability found"
@@ -183,22 +185,26 @@ regex_samples = ['h.*?.*?j', '^(?=hello)[a-z]{5}', '^<\!\-\-(.*)+(\/){0,1}\-\->$
 
 def main():
     expr_raw = base64.b64decode(sys.argv[1])
-    r = root_pb2.Root()
-    r.ParseFromString(expr_raw)
-    iterations = 1000
-    tokens = get_tokens(r.expression)
-    # print(tokens)
-    # print(generate_seeds(tokens))
-    output, evolution = evaluate_regex(r.expression, iterations)
-    #print(output)
-    print(base64.b64encode(output.SerializeToString()).decode('utf-8'))
 
-    # if len(evolution) > 2:
-    #     plt.plot(evolution)
-    #     plt.xlabel("Generation")
-    #     plt.ylabel("Slowest input (seconds)")
-    #     # plt.title(expr_raw)
-    #     plt.show()
+    if not testing:
+        r = root_pb2.Root()
+        r.ParseFromString(expr_raw)
+        output, evolution = evaluate_regex(r.expression)
+        print(base64.b64encode(output.SerializeToString()).decode('utf-8'))
+
+    else: 
+        
+        r = root_pb2.Expression()
+        r.ParseFromString(expr_raw)
+        output, evolution = evaluate_regex(r)
+        print(output)
+
+        if len(evolution) > 2:
+            plt.plot(evolution)
+            plt.xlabel("Generation")
+            plt.ylabel("Slowest input (seconds)")
+            # plt.title(expr_raw)
+            plt.show()
 
 
 if __name__ == "__main__":

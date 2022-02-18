@@ -11,8 +11,11 @@ import config
 from timing import match_time
 
 
-# changes "iterations" number of characters to random other characters 
+
 def single_char_mutate(string, characters, iterations):
+    """
+    Changes "iterations" number of characters to random other characters 
+    """
     new_string = list(string)
     for i in range(iterations):
         string_index = random.randint(0, len(string) - 1)
@@ -25,8 +28,10 @@ def single_char_mutate(string, characters, iterations):
 
 
 
-#Randomly mutates the given string in one of 5 ways, as described in the paper
 def mult_mutate(string, characters):
+    """
+    Randomly mutates the given string in one of 5 ways, as described in the paper
+    """
     new_string = list(string)
     choice = random.choice([1,2,3,4,5])
     char_index = random.randint(0, len(characters) - 1)
@@ -54,8 +59,11 @@ def mult_mutate(string, characters):
         return string
 
 
-#crosses over 2 strings
+
 def crossover_mutate(input_string, input_string_2):
+    """
+    Crosses over two strings 
+    """
     input_string_copy = list(input_string)
     input_string_copy_2 = list(input_string_2)
     string_index1 = random.randint(0, len(input_string) - 1)
@@ -78,8 +86,11 @@ def crossover_mutate(input_string, input_string_2):
     return input_string_copy, input_string_copy_2
 
 
-#trim_muatate. Remove single character mutation
+
 def trim_mutate(regex, input):
+    """
+    Mutate by removing a character 
+    """
     trim = list(input)
     slowest_string = input
     slowest_so_far = 0
